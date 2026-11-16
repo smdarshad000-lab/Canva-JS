@@ -117,6 +117,25 @@ class Geometry {
         this.info = document.getElementById("info");
         this.clearBtn = document.getElementById("clearBtn");
 
+        this.mode = "compass";
+        this.compassBtn = document.getElementById("compassBtn");
+        this.protractorBtn = document.getElementById("protractorBtn");
+        this.penBtn = document.gerElementById("penBtn");
+        // for penBtn;
+        this.pX = 400;
+        this.pY = 480;
+        this.pR = 260;
+        this.draggingP = false;
+        this.pOffsetX = 0;
+        this.pOffsetY = 0;
+        this.draggingCenter = false;
+        this.centerOffset = 0;
+        this.centerOffsetY = 0;
+        this.movedCompass = false;
+        this.drawing = false;
+        this.stroke = [];
+        this.strokes = []; 
+
         this.info.textContent = "Compass: click to set the center";
 
         this.startListening();
@@ -136,6 +155,18 @@ class Geometry {
         this.canvas.addEventListener("click", function(event) {
             self.handleClick(event.offsetX, event.offsetY);
         });
+
+        // this.canvas.addEventListener("mousedown", function(event){
+        //     self.handleMouseDown(event.offsetX, event.offsetY);
+        // });
+
+        // this.canvas.addEventListener("mouseup", function(event){
+        //     self.handleMouseDown(event.offsetX, event.offsetY);
+        // });
+
+        // this.canvas.addEventListener("click", funciton(event){
+        //     self.handleClick(event.offsetX, event.offsetY);
+        // });
     }
 
     startButtons(){
@@ -146,10 +177,43 @@ class Geometry {
             this.centerY = null;
             this.info.textContent = "Cleared. Clink to set a new ceneter.";
             this.draw();
-        })
+        });
+
+        this.protractorBtn.addEventListener("click", () =>{
+            this.mode = "protractor";
+            this.centerX = null;
+            this.centerY = null;
+            this.info.textContent = "Protractor: move the mouse to read the angle";
+            this.draw();
+        });
+
+        this.compassBtn.addEventListener("click", () => {
+            this.mode = "compass";
+            this.centerX = null;
+            this.centerY = null;
+            this.info.textContent = "compass: click to set the center";
+            this.draw();
+        });
+
+        this.penBtn.addEventListener("click", () => {
+            this.setPenMode();
+
+            this.mode = "pen";
+            this.centerX = "null";
+            this.centerY = "null";
+            this.drawing = false;
+            this.stroke = [];
+            this.info.textContent = "pen: hold the moues drag to draw";
+            this.draw();
+        });
     }
 
     handleClick(x, y) {
+
+        if(this.mode === "protractor"){
+            return;
+        }
+
         if (this.centerX === null) {
             this.centerX = x;
             this.centerY = y;
@@ -203,10 +267,87 @@ class Geometry {
             this.ctx.stroke();
         }
 
-        this.ctx.beginPath();
-        this.ctx.arc(this.mouseX, this.mouseY, 5, 0, Math.PI * 2);
-        this.ctx.fill();
+        if(this.mode === "protractor"){
+            this.drawProtractor();
+        }
+
+        this.ctx.strokeStyle = "black";
+        this.ctx.fillStyle = "black";
     }
+
+    drawProtractor(){
+        let cx = 400;
+        let cy = 480;
+        let r = 260;
+
+        this.ctx.beginPath();
+        this.ctx.arc(cx, cy, r, Math.PI, 2* Math.PI);
+        this.ctx.stroke();
+        this.ctx.beginPath();
+        this.ctx.moveTo(cx-r, cy);
+        this.ctx.lineTo(cx + r, cy);
+        this.ctx.stroke();
+
+        for(let d = 0; d <= 180; d += 5){
+
+            let angleRad = d * Math.PI/180;
+            let outerX = cx + r * Math.cos(angleRad);
+            let outerY = cy - r * Math.sin(angleRad);
+
+            let innerLength = 15;
+
+            if( d % 10 === 0){
+                innerLength = 25;
+            }
+
+            let innerX = cx + (r - innerLength) * Math.cos(angleRad);
+            let innerY = cy - (r - innerLength) * Math.sin(angleRad);
+
+            this.ctx.beginPath();
+            this.ctx.moveTo(innerX, innerY);
+            this.ctx.lineTo(outerX, outerY);
+            this.ctx.stroke();
+        }
+
+        this.ctx.font = "14px sans-serif";
+        this.ctx.fillStyle = "#334155";
+        this.ctx.textAlign = "center";
+        this.ctx.textBaseline = "middle";
+
+        for(let d = 0; d <= 180; d += 30){
+            let angleRad = d * Math.PI / 180;
+            let labelX = cx + (r - 45) * Math.cos(angleRad);
+            let labelY = cy - (r - 45) * Math.sin(angleRad);
+            this.ctx.fillText(d, labelX, labelY);
+        }
+
+        let dx = this.mouseX - cx;
+        let dy = this.mouseY - cy;
+
+        let degrees = Math.atan2(-dy, dx) * 180 / Math.PI;
+
+        if(degrees < 0){
+            degrees = degrees + 360;
+        }
+
+        if(degrees >= 0 && degrees <= 180){
+            let angleRad = degrees * Math.PI / 180;
+            let armX = cx + r * Math.cos(angleRad);
+            let armY = cy - r * Math.sin(angleRad);
+
+            this.ctx.beginPath();
+            this.ctx.strokeStyle = "red";
+            this.ctx.moveTo(cx, cy);
+            this.ctx.lineTo(armX, armY);
+            this.ctx.stroke();
+            this.ctx.fillStyle = "red";
+            this.ctx.fillText(Math.round(degrees) + "°", armX, armY - 20);
+        }
+
+        this.ctx.textAlign = "left";
+        this.ctx.textBaseline = "alphabetic";
+    }
+
 }
 
 let geometry = new Geometry();
