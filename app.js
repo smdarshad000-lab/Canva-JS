@@ -1,106 +1,3 @@
-// const canvas = document.getElementById('myCanvas');
-
-// const ctx = canvas.getContext('2d');
-
-// class Geometry{
-
-//     constructor(){
-//         this.canvas = document.getElementById('myCanvas');
-//         this.ctx = this.canvas.getContext('2d');
-
-//         this.mouseX = 0;
-//         this.mouseY = 0;      
-// }
-
-// const app = new Geometry();
-
-// let canvas = document.getElementById("myCanvas");
-// let context = canvas.getContext("2d");
-
-// var window_height = window.innerHeight;
-// var window_width = window.innerWidth;
-
-// canvas.width = window_width;
-// canvas.height = window_height;
-
-// canvas.style.background = "#aff8";
-
-// classImage{
-//     constructor(imagePath, xpos, ypos, width, height){
-//         this.imagePath= imagePath;
-//         this.xpos = xpos;
-//         this.ypos = ypos;
-//         this.width = width;
-//         this.height = height;
-//     }
-// }
-
-
-// function createImage(){
-//     let myImage = document.createImage('img');
-//     myImage.src = imagePath;
-//     myImage.onload = function(){
-//         context.drawImage(myImage, xpos, ypos, width, height); 
-//     }
-// }
-
-// let image = new Image('logo.png', 50, 50, 100, 100);
-// createImage(context, image.imagePath, image.xpos, image.ypod, image.width, image.height);
-
-// class Geometry {
-//     constructor() {
-//         this.canvas = document.getElementById("Canvas");
-//         this.ctx = this.canvas.getContext("2d");
-//         this.info = document.getElementById("info");
-
-//         this.mouseX = 0;
-//         this.mouseY = 0;
-
-//         this.info.textContent = "Compass: click to set the center, then click again to set the radius.";
-
-//         this.startListening();
-//         this.draw();
-//     }
-
-//     startListening() {
-//         this.canvas.addEventListener("mousemove", (event) => {
-//             const point = this.getMousePosition(event);
-
-//             this.mouseX = point.x;
-//             this.mouseY = point.y;
-
-//             this.draw();
-//         });
-//     }
-
-//     getMousePosition(event) {
-//         const rect = this.canvas.getBoundingClientRect();
-//         const scaleX = this.canvas.width / rect.width;
-//         const scaleY = this.canvas.height / rect.height;
-
-//         return {
-//             x: (event.clientX - rect.left) * scaleX,
-//             y: (event.clientY - rect.top) * scaleY
-//         };
-//     }
-
-//     clear() {
-//         this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
-//     }
-
-//     draw() {
-//         this.clear();
-
-//         this.ctx.fillStyle = "red";
-//         this.ctx.beginPath();
-//         this.ctx.arc(this.mouseX, this.mouseY, 4, 0, Math.PI * 2);
-//         this.ctx.fill();
-//     }
-// }
-
-// const app = new Geometry();
-
-
 class Geometry {
     constructor() {
         this.canvas = document.getElementById("Canvas");
@@ -112,15 +9,22 @@ class Geometry {
         this.centerX = null;
         this.centerY = null;
 
+        this.arcRadius = 0;
+        this.arcStartAngle = 0;
+        this.arcDrawing = false;
+        this.arcs = [];
+
         this.circles = [];
 
         this.info = document.getElementById("info");
         this.clearBtn = document.getElementById("clearBtn");
 
         this.mode = "compass";
+         
+        // this.info = document.getElementById("info");
         this.compassBtn = document.getElementById("compassBtn");
         this.protractorBtn = document.getElementById("protractorBtn");
-        this.penBtn = document.gerElementById("penBtn");
+        this.penBtn = document.getElementById("penBtn");
         // for penBtn;
         this.pX = 400;
         this.pY = 480;
@@ -129,7 +33,7 @@ class Geometry {
         this.pOffsetX = 0;
         this.pOffsetY = 0;
         this.draggingCenter = false;
-        this.centerOffset = 0;
+        this.centerOffsetX = 0;
         this.centerOffsetY = 0;
         this.movedCompass = false;
         this.drawing = false;
@@ -143,119 +47,310 @@ class Geometry {
         this.draw();
     }
 
+    setCompassMode(){
+        this.mode = "compass";
+        this.centerX = null;
+        this.centerY = null;
+
+        this.arcRadius = 0;
+        this.arcStartAngle = 0;
+        this.arcDrawing = false;
+        this.draggingCenter = false;
+        this.movedCompass = false;
+        this.draggingCenter = false;
+        this.info.textContent = "compass: click to set the center, then click again to set the radius";
+        this.draw();
+    }
+
+    setProtractorMode(){
+        this.mode = "protractor";
+        this.centerX = null;
+        this.centerY = null;
+
+        this.arcDrawing = false;
+        this.draggingP = false;
+        this.draggingCenter = false;
+        this.info.textContent = "protractor: move the mouse to read the angle";
+        this.draw();
+    }
+
+    setPenMode(){
+        this.mode = "pen";
+        this.centerX = null;
+        this.centerY = null;
+        this.arcDrawing = false;
+        this.drawing = false;
+        this.draggingCenter = false;
+        this.info.textContent = "pen: hold the mouse and drag to draw";
+        this.draw();
+    }
+
     startListening() {
         let self = this;
 
         this.canvas.addEventListener("mousemove", function(event) {
             self.mouseX = event.offsetX;
             self.mouseY = event.offsetY;
+            self.handleMouseMove();
             self.draw();
         });
 
-        this.canvas.addEventListener("click", function(event) {
+        // this.canvas.addEventListener("click", function(event) {
+        //     self.handleClick(event.offsetX, event.offsetY);
+        // });
+
+        this.canvas.addEventListener("mousedown", function(event){
+            self.handleMouseDown(event.offsetX, event.offsetY);
+        });
+
+        this.canvas.addEventListener("mouseup", function(event){
+            self.handleMouseUp(event.offsetX, event.offsetY);
+        });
+
+        this.canvas.addEventListener("click", function(event){
             self.handleClick(event.offsetX, event.offsetY);
         });
 
-        // this.canvas.addEventListener("mousedown", function(event){
-        //     self.handleMouseDown(event.offsetX, event.offsetY);
-        // });
 
-        // this.canvas.addEventListener("mouseup", function(event){
-        //     self.handleMouseDown(event.offsetX, event.offsetY);
-        // });
-
-        // this.canvas.addEventListener("click", funciton(event){
-        //     self.handleClick(event.offsetX, event.offsetY);
-        // });
     }
 
     startButtons(){
 
-        this.clearBtn.addEventListener("click", () => {
-            this.circles = [];
-            this.centerX = null;
-            this.centerY = null;
-            this.info.textContent = "Cleared. Clink to set a new ceneter.";
-            this.draw();
-        });
+       this.compassBtn.addEventListener("click", () => {
+        this.setCompassMode();
+       });
 
-        this.protractorBtn.addEventListener("click", () =>{
-            this.mode = "protractor";
-            this.centerX = null;
-            this.centerY = null;
-            this.info.textContent = "Protractor: move the mouse to read the angle";
-            this.draw();
-        });
+       this.protractorBtn.addEventListener("click", ()=> {
+        this.setProtractorMode();
+       });
 
-        this.compassBtn.addEventListener("click", () => {
-            this.mode = "compass";
-            this.centerX = null;
-            this.centerY = null;
-            this.info.textContent = "compass: click to set the center";
-            this.draw();
-        });
+       this.penBtn.addEventListener("click", () => {
+        this.setPenMode();
+       });
 
-        this.penBtn.addEventListener("click", () => {
-            this.setPenMode();
-
-            this.mode = "pen";
-            this.centerX = "null";
-            this.centerY = "null";
-            this.drawing = false;
-            this.stroke = [];
-            this.info.textContent = "pen: hold the moues drag to draw";
-            this.draw();
-        });
+       this.clearBtn.addEventListener("click", () => {
+        this.arcs = [];
+        this.strokes = [];
+        this.stroke = [];
+        this.drawing = false;
+        this.arcRadius = 0;
+        this.arcStartAngle = 0;
+        this.arcDrawing = false; 
+        this.centerX = null;
+        this.centerY = null;
+        this.draggingCenter = false;
+        this.draggingP = false;
+        this.movedCompass = false;
+        this.info.textContent = "Cleared. Click to set a new center";
+        this.draw();
+       });
     }
 
     handleClick(x, y) {
-
-        if(this.mode === "protractor"){
+        if(this.mode !== "compass"){
             return;
         }
 
-        if (this.centerX === null) {
+        if(this.movedCompass){
+            this.movedCompass = false;
+            return;
+        }
+
+        if(this.centerX === null){
             this.centerX = x;
             this.centerY = y;
-            this.info.textContent = "Now move the mouse and click again to set the radius";
-        } else {
+            this.info.textContent = "Move the mouse and click again to set the radius";
+        }else if(this.arcDrawing === false){
             let dx = x - this.centerX;
             let dy = y - this.centerY;
-            let radius = Math.sqrt(dx * dx + dy * dy);
-            this.info.textContent = "Circle saved. Click to set a new center.";
+            let radius = Math.sqrt(dx*dx + dy*dy);
 
-            this.circles.push({
+            if(radius <= 20){
+                return;
+            }
+
+            this.arcRadius = radius;
+            this.arcStartAngle = Math.atan2(-dy, dx);
+            this.arcDrawing = true;
+        }   else {
+            let dx = x - this.centerX;
+            let dy = y - this.centerY;
+            let dist = Math.sqrt(dx*dx + dy*dy);
+
+            if(dist <= 20){
+                return;
+            }
+
+            let endAngle = Math.atan2(-dy, dx);
+            let diff = this.getArcDiff(this.arcStartAngle, endAngle);
+
+            if(Math.abs(diff) < 0.05){
+                return;
+            }
+
+
+            this.arcs.push({
                 centerX: this.centerX,
                 centerY: this.centerY,
-                radius: radius
+                radius: this.arcRadius,
+                startAngle: this.arcStartAngle,
+                diff: diff
             });
 
             this.centerX = null;
             this.centerY = null;
+            this.arcDrawing = false;
+            this.info.textContent = "arc saved click to set a new center";
         }
 
         this.draw();
     }
 
+    handleMouseDown(x, y){
+        if(this.mode === "compass"){
+
+            if(this.centerX !== null){
+                let dx = x - this.centerX;
+                let dy = y - this.centerY;
+                let dist = Math.sqrt(dx*dx + dy*dy);
+
+                if(dist <= 20){
+                    this.draggingCenter = true;
+                    this.movedCompass = false;
+                    this.centerOffsetX = this.centerX-x;
+                    this.centerOffsetY = this.centerY-y;
+                }
+            }
+        }
+
+            else if(this.mode === "protractor"){
+                // let dx = x-this.pX;
+                // let dy = y-this.pY;
+                // let dist = Math.sqrt(dx*dx + dy*dy);
+                // this.draggingP = true;
+                    this.draggingP = true;
+                    this.pOffsetX = this.pX-x;
+                    this.pOffsetY = this.pY-y;
+                
+            }
+
+            else if(this.mode === "pen"){
+                this.drawing = true;
+                this.stroke = [];
+                this.stroke.push({ x:x, y:y});
+            }
+
+            this.draw();
+    }
+
+    handleMouseMove(){
+        if(this.draggingCenter){
+            this.centerX = this.mouseX + this.centerOffsetX;
+            this.centerY = this.mouseY + this.centerOffsetY;
+            this.movedCompass = true;
+        }
+
+        if(this.draggingP){
+            this.pX = this.mouseX + this.pOffsetX;
+            this.pY = this.mouseY + this.pOffsetY;
+        }
+
+        if(this.drawing){
+            this.stroke.push({ x: this.mouseX, y: this.mouseY });
+        }
+    }
+
+    handleMouseUp(x,y){
+        this.draggingCenter = false;
+        this.draggingP = false;
+
+        if(this.drawing){
+            if(this.stroke.length > 1){
+                this.strokes.push(this.stroke);
+            }
+
+            this.stroke = [];
+            this.drawing = false;
+
+            this.draw();
+        }
+    }
+
+    getArcDiff(startAngle, endAngle){
+        let diff = endAngle - startAngle;
+
+        while(diff > Math.PI){
+            diff = diff - 2*Math.PI;
+        }
+
+        while(diff < -Math.PI){
+            diff = diff + 2 * Math.PI;
+        }
+
+        return diff;
+    }
+
+
     draw() {
         this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
 
-        for(let i = 0; i < this.circles.length; i++){
-            let circle = this.circles[i];
+        for(let i = 0; i < this.arcs.length; i++){
+            let arc = this.arcs[i];
 
-             this.ctx.beginPath();
-            this.ctx.arc(circle.centerX, circle.centerY, circle.radius, 0, Math.PI * 2);
+            this.ctx.beginPath();
+            // this.ctx.arc(arc.centerX, arc.centerY, arc.radius, -arc.startAngle, -arc.StartAngle - arc.diff, arc.diff > 0);
+            this.ctx.arc(arc.centerX, arc.centerY, arc.radius, -arc.startAngle, -arc.startAngle - arc.diff, arc.diff > 0);
             this.ctx.stroke();
         }
 
-        if (this.centerX !== null) {
+        if (this.centerX !== null && this.arcDrawing === false){
             let dx = this.mouseX - this.centerX;
             let dy = this.mouseY - this.centerY;
             let radius = Math.sqrt(dx * dx + dy * dy);
 
+            let endAngle = Math.atan2(-dy, dx);
+            let diff = this.getArcDiff(this.arcStartAngle, endAngle);
+            
+
             this.ctx.beginPath();
-            this.ctx.arc(this.centerX, this.centerY, radius, 0, Math.PI * 2);
+            this.ctx.arc(this.centerX, this.centerY, radius, 0, Math.PI*2);
             this.ctx.stroke();
+
+            this.ctx.beginPath();
+            this.ctx.moveTo(this.centerX, this.centerY);
+            this.ctx.lineTo(this.mouseX, this.mouseY);
+            // this.centerY - this.arcRadius * Math.sin(this.arcStartAngle));
+            this.ctx.stroke();
+
+
+            this.ctx.beginPath();
+            this.ctx.arc(this.centerX, this.centerY, 6, 0, Math.PI * 2);
+            this.ctx.fill();
+        }
+
+        if(this.centerX !== null && this.arcDrawing === true){
+             let dx = this.mouseX - this.centerX;
+            let dy = this.mouseY - this.centerY;
+            let endAngle = Math.atan2(-dy, dx);
+            let diff = this.getArcDiff(this.arcStartAngle, endAngle);
+
+            this.ctx.beginPath();
+            this.ctx.arc(
+                this.centerX,
+                this.centerY,
+                this.arcRadius,
+                -this.arcStartAngle,
+                -this.arcStartAngle - diff,
+                diff > 0
+            );
+            this.ctx.stroke();
+
+            this.ctx.beginPath();
+            this.ctx.moveTo(this.centerX, this.centerY);
+            this.ctx.lineTo(this.centerX + this.arcRadius * Math.cos(this.arcStartAngle),
+                            this.centerY - this.arcRadius * Math.sin(this.arcStartAngle));
+            this.ctx.stroke();
+
 
             this.ctx.beginPath();
             this.ctx.moveTo(this.centerX, this.centerY);
@@ -263,12 +358,41 @@ class Geometry {
             this.ctx.stroke();
 
             this.ctx.beginPath();
-            this.ctx.arc(this.centerX, this.centerY, 4, 0, Math.PI * 2);
-            this.ctx.stroke();
+            this.ctx.arc(this.centerX, this.centerY, 6, 0, Math.PI * 2);
+            this.ctx.fill();
         }
 
         if(this.mode === "protractor"){
             this.drawProtractor();
+        }
+
+        if(this.mode === "compass" && this.centerX === null){
+            this.ctx.beginPath();
+            this.ctx.moveTo(this.mouseX - 10, this.mouseY);
+            this.ctx.lineTo(this.mouseX + 10, this.mouseY);
+            this.ctx.moveTo(this.mouseX, this.mouseY - 10);
+            this.ctx.lineTo(this.mouseX, this.mouseY + 10);
+            this.ctx.stroke();
+        }
+
+        if(this.stroke.length > 0){
+            this.ctx.beginPath();
+            this.ctx.moveTo(this.stroke[0].x, this.stroke[0].y);
+            for(let i = 1; i < this.stroke.length; i++){
+                this.ctx.lineTo(this.stroke[i].x, this.stroke[i].y);
+            }
+
+            this.ctx.stroke();
+        }
+
+        for (let s = 0; s < this.strokes.length; s++) {
+            let saved = this.strokes[s];
+            this.ctx.beginPath();
+            this.ctx.moveTo(saved[0].x, saved[0].y);
+            for (let i = 1; i < saved.length; i++) {
+                this.ctx.lineTo(saved[i].x, saved[i].y);
+            }
+            this.ctx.stroke();
         }
 
         this.ctx.strokeStyle = "black";
@@ -276,15 +400,24 @@ class Geometry {
     }
 
     drawProtractor(){
-        let cx = 400;
-        let cy = 480;
-        let r = 260;
+        let cx = this.pX;
+        let cy = this.pY;
+        let r = this.pR;
 
         this.ctx.beginPath();
         this.ctx.arc(cx, cy, r, Math.PI, 2* Math.PI);
         this.ctx.stroke();
+
         this.ctx.beginPath();
-        this.ctx.moveTo(cx-r, cy);
+        this.ctx.arc(cx, cy, r-70, Math.PI, 2*Math.PI);
+        this.ctx.stroke();
+
+        // this.ctx.beginPath();
+        // this.ctx.arc(cx,cy, r, Math.PI, 2*Math.PI);
+        // this.ctx.stroke();
+
+        this.ctx.beginPath();
+        this.ctx.moveTo(cx - r, cy);
         this.ctx.lineTo(cx + r, cy);
         this.ctx.stroke();
 
@@ -325,7 +458,6 @@ class Geometry {
         let dy = this.mouseY - cy;
 
         let degrees = Math.atan2(-dy, dx) * 180 / Math.PI;
-
         if(degrees < 0){
             degrees = degrees + 360;
         }
