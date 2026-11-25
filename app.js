@@ -468,7 +468,7 @@ class Geometry {
             let armY = cy - r * Math.sin(angleRad);
 
             this.ctx.beginPath();
-            this.ctx.strokeStyle = "red";
+            this.ctx.strokeStyle = "black";
             this.ctx.moveTo(cx, cy);
             this.ctx.lineTo(armX, armY);
             this.ctx.stroke();
@@ -481,5 +481,20 @@ class Geometry {
     }
 
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 let geometry = new Geometry();
