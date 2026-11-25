@@ -326,6 +326,16 @@ class Geometry {
             this.ctx.beginPath();
             this.ctx.arc(this.centerX, this.centerY, 6, 0, Math.PI * 2);
             this.ctx.fill();
+
+            this.ctx.font = "14px sans-serif";
+            this.ctx.fillStyle = "red";
+            this.ctx.textAlign = "center";
+            this.ctx.textBaseline = "middle";
+
+            let labelX = (this.centerX + this.mouseX) / 2;
+            let labelY = (this.centerY + this.mouseY) / 2 - 12;
+
+            this.ctx.fillText(Math.round(radius) + "px", labelX, labelY);
         }
 
         if(this.centerX !== null && this.arcDrawing === true){
@@ -360,6 +370,19 @@ class Geometry {
             this.ctx.beginPath();
             this.ctx.arc(this.centerX, this.centerY, 6, 0, Math.PI * 2);
             this.ctx.fill();
+
+            let degrees = Math.abs(diff) * 180 / Math.PI;
+
+            this.ctx.font = "14px sans-serif";
+            this.ctx.fillStyle = "red";
+            this.ctx.textAlign = "center";
+            this.ctx.textBaseline = "middle";
+
+            let labelAngle = this.arcStartAngle + diff;
+            let labelX = this.centerX + (this.arcRadius + 25) * Math.cos(labelAngle);
+            let labelY = this.centerY - (this.arcRadius + 25) * Math.sin(labelAngle);
+
+            this.ctx.fillText(Math.round(degrees) + "°", labelX, labelX);
         }
 
         if(this.mode === "protractor"){
@@ -397,6 +420,9 @@ class Geometry {
 
         this.ctx.strokeStyle = "black";
         this.ctx.fillStyle = "black";
+
+        this.ctx.textAlign = "left";
+        this.ctx.textBaseline = "alphabetic";
     }
 
     drawProtractor(){
@@ -481,20 +507,5 @@ class Geometry {
     }
 
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 let geometry = new Geometry();
